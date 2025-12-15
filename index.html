@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WinGo VIP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- CORE STYLES --- */
+        :root { --bg:#f7f8ff; --blue:#2b3270; --red:#d93d3d; --green:#4caf50; --violet:#b659fe; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; user-select: none; }
+        body { background: var(--bg); padding-bottom: 80px; }
+
+        /* NAV & WALLET */
+        .navbar { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .logo { font-size: 22px; font-weight: bold; color: #333; font-style: italic; }
+        
+        .wallet-card { background: var(--blue); padding: 25px; color: white; text-align: center; border-radius: 0 0 30px 30px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(43, 50, 112, 0.3); }
+        .bal-amt { font-size: 36px; font-weight: bold; margin: 10px 0; }
+        .w-btn { flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; color: white; font-size: 15px; margin: 0 5px; cursor: pointer; }
+        .btn-w { background: rgba(255,255,255,0.2); } 
+        .btn-d { background: var(--green); box-shadow: 0 4px 10px rgba(76,175,80,0.4); }
+
+        /* TABS */
+        .tabs { display: flex; justify-content: space-around; background: #fff; padding: 10px; margin: 0 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .tab { text-align: center; width: 22%; padding: 8px; border-radius: 10px; cursor: pointer; opacity: 0.6; transition: 0.3s; }
+        .tab.active { background: linear-gradient(180deg, #5da7f0, #2b3270); color: white; opacity: 1; box-shadow: 0 4px 10px rgba(43, 50, 112, 0.3); }
+        
+        /* BOARD */
+        .board { background: #fff; margin: 20px 15px; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .info { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
+        .timer-box { display: flex; gap: 4px; font-size: 22px; font-weight: bold; color: var(--blue); }
+        .digit { background: #f0f0f0; padding: 4px 8px; border-radius: 6px; }
+
+        /* BET BUTTONS */
+        .colors { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-c { flex: 1; padding: 14px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .g { background: var(--green); } .v { background: var(--violet); } .r { background: var(--red); }
+
+        .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .n-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: none; font-size: 18px; font-weight: bold; color: white; background-size: 100% 100%; cursor: pointer; box-shadow: 0 4px 5px rgba(0,0,0,0.2); }
+        
+        .b-0 { background: linear-gradient(135deg, var(--red) 50%, var(--violet) 50%); }
+        .b-5 { background: linear-gradient(135deg, var(--green) 50%, var(--violet) 50%); }
+        .b-g { background: var(--green); } .b-r { background: var(--red); }
+
+        .sizes { display: flex; gap: 10px; }
+        .btn-s { flex: 1; padding: 12px; border-radius: 30px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .big { background: orange; box-shadow: 0 4px 0 #cc8400; } .small { background: #5da7f0; box-shadow: 0 4px 0 #3b7dc4; }
+
+        /* --- POPUPS STYLES --- */
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 90; backdrop-filter: blur(2px); }
+        
+        /* 1. BETTING SHEET */
+        .bet-pop { position: fixed; bottom: -100%; left: 0; width: 100%; background: white; padding: 25px; border-radius: 25px 25px 0 0; z-index: 100; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .bet-pop.active { bottom: 0; }
+        .chips { display: flex; gap: 8px; margin: 20px 0; }
+        .chip { flex: 1; padding: 10px; background: #f5f5f5; text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer; border: 1px solid #ddd; }
+        .chip.active { background: #ddd; border-color: #333; }
+        
+        /* 2. SUCCESS POPUP (Bet Placed) */
+        .success-pop { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85); color: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 200; width: 200px;
+        }
+        .check-icon { font-size: 50px; color: var(--green); margin-bottom: 10px; animation: scaleUp 0.3s; }
+
+        /* 3. WIN POPUP */
+        .win-pop { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 85%; background: url('https://img.freepik.com/free-vector/celebration-background-with-gold-confetti_23-2148479540.jpg');
+            background-size: cover; padding: 40px 20px; border-radius: 25px; text-align: center; z-index: 210;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); animation: popIn 0.5s;
+        }
+        .win-amt { font-size: 40px; color: #fff; font-weight: 900; margin: 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        
+        /* 4. LOSS POPUP */
+        .loss-pop {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; background: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 210;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.5s;
+        }
+        .loss-icon { font-size: 60px; color: #aaa; margin-bottom: 15px; }
+
+        @keyframes popIn { 0% {transform: translate(-50%, -50%) scale(0.5); opacity:0;} 100% {transform: translate(-50%, -50%) scale(1); opacity:1;} }
+        @keyframes scaleUp { 0% {transform: scale(0);} 80% {transform: scale(1.2);} 100% {transform: scale(1);} }
+
+        /* History & Ad */
+        .hist { margin-top: 25px; background: white; border-radius: 20px 20px 0 0; padding-bottom: 20px; }
+        .hist th { background: #f5f5f5; padding: 15px; font-size: 12px; color: #666; }
+        .hist td { padding: 15px; text-align: center; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
+        #adView { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 300; color: white; text-align: center; padding-top: 40vh; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">WIN GO</div>
+    <i class="fas fa-headset" style="font-size:20px; color:#555;"></i>
+</div>
+
+<div class="wallet-card">
+    <div style="font-size:14px; opacity:0.8;">Available Balance</div>
+    <div class="bal-amt">₹ <span id="bal">0.00</span></div>
+    <div style="display:flex;">
+        <button class="w-btn btn-w">Withdraw</button>
+        <button class="w-btn btn-d" onclick="watchAd()">Deposit</button>
+    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="setMode(30,this)">30s</div>
+    <div class="tab" onclick="setMode(60,this)">1Min</div>
+    <div class="tab" onclick="setMode(180,this)">3Min</div>
+    <div class="tab" onclick="setMode(300,this)">5Min</div>
+</div>
+<div class="board">
+    <div class="info">
+        <div>
+            <div style="font-size:12px; color:#888; font-weight:bold;">Period</div>
+            <div style="font-size:22px; font-weight:900; color:#333;" id="pid">Loading...</div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:12px; color:#888;">Count Down</div>
+            <div class="timer-box">
+                <div class="digit" id="m1">0</div><div class="digit" id="m2">0</div>:
+                <div class="digit" id="s1">0</div><div class="digit" id="s2">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="colors">
+        <button class="btn-c g" onclick="openBet('Green')">Green</button>
+        <button class="btn-c v" onclick="openBet('Violet')">Violet</button>
+        <button class="btn-c r" onclick="openBet('Red')">Red</button>
+    </div>
+    <div class="nums">
+        <button class="n-btn b-0" onclick="openBet('0')">0</button>
+        <button class="n-btn b-g" onclick="openBet('1')">1</button>
+        <button class="n-btn b-r" onclick="openBet('2')">2</button>
+        <button class="n-btn b-g" onclick="openBet('3')">3</button>
+        <button class="n-btn b-r" onclick="openBet('4')">4</button>
+        <button class="n-btn b-5" onclick="openBet('5')">5</button>
+        <button class="n-btn b-r" onclick="openBet('6')">6</button>
+        <button class="n-btn b-g" onclick="openBet('7')">7</button>
+        <button class="n-btn b-r" onclick="openBet('8')">8</button>
+        <button class="n-btn b-g" onclick="openBet('9')">9</button>
+    </div>
+    <div class="sizes">
+        <button class="btn-s big" onclick="openBet('Big')">Big</button>
+        <button class="btn-s small" onclick="openBet('Small')">Small</button>
+    </div>
+</div>
+
+<div class="hist">
+    <table width="100%">
+        <thead><tr><th>Period</th><th>Number</th><th>Big/Small</th><th>Result</th></tr></thead>
+        <tbody id="hList"></tbody>
+    </table>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeBet()"></div>
+<div class="bet-pop" id="betPop">
+    <div style="background:var(--blue); color:white; padding:15px; border-radius:15px 15px 0 0; margin:-25px -25px 20px -25px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:bold;">Select <span id="selName">Green</span></span>
+        <span onclick="closeBet()" style="font-size:20px; cursor:pointer;">&times;</span>
+    </div>
+    <p>Balance: <b>₹ <span id="popBal">0</span></b></p>
+    <div class="chips">
+        <div class="chip active" onclick="setChip(1,this)">1</div>
+        <div class="chip" onclick="setChip(10,this)">10</div>
+        <div class="chip" onclick="setChip(100,this)">100</div>
+        <div class="chip" onclick="setChip(1000,this)">1000</div>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <b>Quantity</b>
+        <div style="display:flex; gap:10px;">
+            <button onclick="qty(-1)" style="width:35px; height:35px; border:none; background:#eee; font-weight:bold;">-</button>
+            <span id="qVal" style="margin:0 10px; font-weight:bold; font-size:20px;">1</span>
+            <button onclick="qty(1)" style="width:35px; height:35px; border:none; background:#eee; font-weight:bold;">+</button>
+        </div>
+    </div>
+    <button onclick="placeBet()" style="width:100%; padding:15px; background:linear-gradient(90deg, #d93d3d, #ff6b6b); color:white; border:none; border-radius:30px; font-size:16px; font-weight:bold;">Confirm ₹<span id="tot">1</span></button>
+</div>
+
+<div class="success-pop" id="successPop">
+    <i class="fas fa-check-circle check-icon"></i>
+    <h3>Bet Placed</h3>
+    <p>Wait for result...</p>
+</div>
+
+<div class="overlay" id="winOverlay" style="z-index:190;"></div>
+<div class="win-pop" id="winPop">
+    <div style="font-size:24px; color:white; font-weight:900; margin-bottom:5px;">CONGRATULATIONS</div>
+    <div style="color:#eee;">Lottery Result: <span id="winRes" style="font-weight:bold; color:yellow;">Red 6</span></div>
+    <div class="win-amt">+ ₹<span id="winAmt">0</span></div>
+    <p style="color:#ddd; margin-bottom:20px;">Bonus has been sent to your wallet</p>
+    <button onclick="closeWin()" style="padding:10px 40px; border:none; background:white; color:#d93d3d; font-weight:bold; border-radius:30px; font-size:16px;">Close</button>
+</div>
+
+<div class="loss-pop" id="lossPop">
+    <i class="far fa-frown loss-icon"></i>
+    <h2 style="color:#333; margin-bottom:5px;">So Sad...</h2>
+    <p style="color:#666; margin-bottom:15px;">You lost this round.</p>
+    <div style="background:#f5f5f5; padding:10px; border-radius:10px; margin-bottom:20px;">
+        Result was: <span id="lossRes" style="font-weight:bold; color:#d93d3d;">Red 6</span>
+    </div>
+    <button onclick="closeLoss()" style="width:100%; padding:12px; border:none; background:#333; color:white; font-weight:bold; border-radius:30px;">Try Again</button>
+</div>
+
+<div id="adView">
+    <h2 style="margin-top:30px;">Connecting Server...</h2>
+    <div id="adT" style="font-size:60px; color:#4caf50; margin:30px; font-weight:bold;">5</div>
+    <p style="color:#aaa;">Verifying Request...</p>
+    <button id="clmBtn" style="display:none; padding:12px 40px; background:#4caf50; border:none; color:white; border-radius:30px; font-weight:bold;" onclick="claim()">CLAIM ₹500</button>
+</div>
+
+<script>
+    // CONFIG
+    const AD_LINK = "https://otieu.com/4/10329631";
+    let bal=0, mode=30, sel="", chip=1, q=1;
+    let activeBet = null; 
+
+    window.onload = () => {
+        let s = localStorage.getItem('wingoMaxBal');
+        bal = s ? parseFloat(s) : 0;
+        updUI();
+        setInterval(loop, 100);
+        for(let i=0; i<10; i++) addRow(2025121610000-i);
+    };
+
+    function updUI() {
+        document.getElementById('bal').innerText = bal.toFixed(2);
+        document.getElementById('popBal').innerText = bal.toFixed(2);
+        localStorage.setItem('wingoMaxBal', bal);
+    }
+
+    function loop() {
+        const now = new Date();
+        const ts = Math.floor(now.getTime()/1000);
+        const rem = mode - (ts % mode);
+        
+        let m = Math.floor(rem/60);
+        let s = rem % 60;
+        document.getElementById('m1').innerText=Math.floor(m/10); document.getElementById('m2').innerText=m%10;
+        document.getElementById('s1').innerText=Math.floor(s/10); document.getElementById('s2').innerText=s%10;
+
+        // Next Day Period ID
+        const tmr = new Date(now); tmr.setDate(tmr.getDate()+1);
+        const pid = `${tmr.getFullYear()}${String(tmr.getMonth()+1).padStart(2,'0')}${String(tmr.getDate()).padStart(2,'0')}100${Math.floor((ts - new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000)/mode)}`;
+        document.getElementById('pid').innerText = pid;
+
+        if(rem === mode || rem === mode - 0.2) {
+            checkWin(pid-1); 
+        }
+    }
+
+    // MAIN LOGIC
+    function checkWin(pid) {
+        const n = Math.floor(Math.random()*10);
+        const size = n>=5 ? "Big" : "Small";
+        let c = "Red";
+        if([1,3,7,9].includes(n)) c = "Green";
+        if([0,5].includes(n)) c = "Violet"; 
+        
+        addRow(pid, n, size, c);
+
+        if(activeBet) {
+            let won = false;
+            let multiplier = 1.96; 
+            let uSel = activeBet.type;
+
+            if(uSel === "Green" && (c==="Green" || n===5)) won=true;
+            if(uSel === "Red" && (c==="Red" || n===0)) won=true;
+            if(uSel === "Violet" && (n===0 || n===5)) { won=true; multiplier=4.5; }
+            if(uSel === "Big" && size==="Big") won=true;
+            if(uSel === "Small" && size==="Small") won=true;
+            if(uSel == n) { won=true; multiplier=9; } 
+
+            if(won) {
+                let profit = activeBet.amt * multiplier;
+                showWin(profit, `${c} ${n}`);
+                bal += profit;
+            } else {
+                showLoss(`${c} ${n}`);
+            }
+            activeBet = null; 
+            updUI();
+        }
+    }
+
+    // POPUP FUNCTIONS
+    function setMode(s,el) { mode=s; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+    
+    function openBet(s) {
+        sel=s; chip=1; q=1;
+        document.getElementById('selName').innerText=s;
+        document.getElementById('overlay').style.display='block';
+        setTimeout(()=>document.getElementById('betPop').classList.add('active'),10);
+        updTot();
+    }
+    function closeBet() {
+        document.getElementById('betPop').classList.remove('active');
+        setTimeout(()=>document.getElementById('overlay').style.display='none',300);
+    }
+    
+    function setChip(v,el) { chip=v; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); updTot(); }
+    function qty(n) { if(q+n>0) q+=n; updTot(); }
+    function updTot() { document.getElementById('qVal').innerText=q; document.getElementById('tot').innerText=chip*q; }
+    
+    function placeBet() {
+        let cost = chip*q;
+        if(bal < cost) { alert("Low Balance"); return; }
+        bal -= cost;
+        activeBet = { type: sel, amt: cost };
+        updUI();
+        closeBet();
+        
+        // SHOW SUCCESS POPUP
+        const sp = document.getElementById('successPop');
+        sp.style.display = 'block';
+        setTimeout(() => { sp.style.display = 'none'; }, 2000);
+    }
+
+    function showWin(amt, res) {
+        document.getElementById('winAmt').innerText = amt.toFixed(2);
+        document.getElementById('winRes').innerText = res;
+        document.getElementById('winOverlay').style.display = 'block';
+        document.getElementById('winPop').style.display = 'block';
+    }
+    function closeWin() {
+        document.getElementById('winOverlay').style.display = 'none';
+        document.getElementById('winPop').style.display = 'none';
+    }
+
+    function showLoss(res) {
+        document.getElementById('lossRes').innerText = res;
+        document.getElementById('winOverlay').style.display = 'block';
+        document.getElementById('lossPop').style.display = 'block';
+    }
+    function closeLoss() {
+        document.getElementById('winOverlay').style.display = 'none';
+        document.getElementById('lossPop').style.display = 'none';
+    }
+
+    function addRow(pid, n, size, c) {
+        if(n === undefined) { n=Math.floor(Math.random()*10); size=n>=5?"Big":"Small"; c=[1,3,7,9].includes(n)?"Green":"Red"; if([0,5].includes(n)) c="Violet"; }
+        
+        let col="#d93d3d"; if(c==="Green") col="#4caf50"; if(c==="Violet") col="#b659fe";
+        let row = `<tr><td>${pid}</td><td style="color:${col}; font-size:18px;">${n}</td><td>${size}</td><td><div style="width:10px;height:10px;border-radius:50%;background:${col};display:inline-block;"></div></td></tr>`;
+        let tb = document.getElementById('hList');
+        tb.innerHTML = row + tb.innerHTML;
+        if(tb.children.length>10) tb.removeChild(tb.lastChild);
+    }
+
+    function watchAd() {
+        window.open(AD_LINK);
+        document.getElementById('adView').style.display='block';
+        let t=5; document.getElementById('adT').innerText=t;
+        let i=setInterval(()=>{ t--; document.getElementById('adT').innerText=t; if(t<=0){clearInterval(i); document.getElementById('clmBtn').style.display='inline-block';} },1000);
+    }
+    function claim() {
+        document.getElementById('adView').style.display='none';
+        bal+=500; updUI();
+        showWin(500, "Deposit Bonus");
+    }
+</script>
+</body>
+</html>
