@@ -365,5 +365,105 @@
         showWin(500, "Deposit Bonus");
     }
 </script>
+    <script>
+    // 1. ADVANCED AUDIO ENGINE
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+            // Halka Tick (Button dabane par)
+            osc.frequency.setValueAtTime(800, now);
+            gain.gain.setValueAtTime(0.05, now);
+            osc.start();
+            osc.stop(now + 0.03);
+        } 
+        else if (type === 'bet') {
+            // Coin Sound (Bet confirm hone par)
+            osc.frequency.setValueAtTime(1200, now);
+            osc.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start();
+            osc.stop(now + 0.4);
+        }
+        else if (type === 'win') {
+            // Jeetne ki Dhun (Melody)
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.2, now);
+            // Music Pattern
+            osc.frequency.setValueAtTime(523.25, now); // C
+            osc.frequency.setValueAtTime(659.25, now + 0.1); // E
+            osc.frequency.setValueAtTime(783.99, now + 0.2); // G
+            osc.frequency.setValueAtTime(1046.50, now + 0.3); // High C
+            gain.gain.linearRampToValueAtTime(0, now + 0.8);
+            osc.start();
+            osc.stop(now + 0.8);
+        }
+        else if (type === 'loss') {
+            // Haarne ka Buzz (Sad Sound)
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.4);
+            osc.start();
+            osc.stop(now + 0.5);
+        }
+    }
+
+    // 2. BUTTON CLICKS (Sabhi buttons par 'Tick' sound)
+    document.addEventListener('click', (e) => {
+        // Agar click button, tab, ya chip par ho
+        if(e.target.tagName==='BUTTON'||e.target.closest('button')||e.target.classList.contains('chip')||e.target.classList.contains('t-tab')) {
+            playSound('click');
+        }
+    });
+
+    // 3. LOGIC INJECTION (Purane functions me Sound ghusana)
+    
+    // A. Bet Confirm Sound
+    const oldPlaceBet = window.placeBet;
+    window.placeBet = function() {
+        // Pehle check karein balance hai ya nahi (Logic copy from original)
+        let cost = window.chip * window.q;
+        if(window.bal >= cost) {
+            playSound('bet'); // Coin Sound bajao
+        }
+        oldPlaceBet(); // Fir asli kaam karo
+    };
+
+    // B. Win Sound
+    const oldShowWin = window.showWin;
+    window.showWin = function(amt) {
+        playSound('win'); // Jeetne ki Music
+        oldShowWin(amt);  // Popup dikhao
+    };
+
+    // C. Loss Sound (Sabse Zaruri Trick)
+    // Kyunki 'Loss' ka koi function nahi tha, hum 'CheckWin' ko monitor karenge
+    const oldCheckWin = window.checkWin;
+    window.checkWin = function(pid) {
+        const userWasBetting = window.activeBet; // Kya user ne bet lagayi thi?
+        const oldBalance = window.bal; // Purana balance note karo
+
+        oldCheckWin(pid); // Asli result aane do
+
+        // Ab check karo: Agar bet thi, aur balance NAHI badha, to matlab HAAR gaye
+        if(userWasBetting) {
+            if(window.bal === oldBalance) {
+                setTimeout(() => playSound('loss'), 300); // Thoda ruk ke sad sound
+            }
+        }
+    };
+
+</script>
 </body>
-</htm>l
+</html>
